@@ -339,7 +339,10 @@
                         /* lock, new_lock(), possess(), twist(), wait_for(),
                            release(), peek_lock(), free_lock(), yarn_name */
 #endif
+
+#ifndef WITHOUT_ZOPFLI
 #include "zopfli/deflate.h"     /* DeflatePart(), Options */
+#endif
 
 /* for local functions and globals */
 #define local static
@@ -1281,7 +1284,9 @@ local void compress_thread(void *dummy)
     int bits;                       /* deflate pending bits */
 #endif
     struct space *temp;             /* temporary space for zopfli input */
+#ifndef WITHOUT_ZOPFLI
     Options opts;                   /* zopfli options */
+#endif
     z_stream strm;                  /* deflate stream */
 
     (void)dummy;
@@ -1315,6 +1320,7 @@ local void compress_thread(void *dummy)
             (void)deflateReset(&strm);
             (void)deflateParams(&strm, g.level, Z_DEFAULT_STRATEGY);
         }
+#ifndef WITHOUT_ZOPFLI
         else {
             /* default zopfli options as set by InitOptions():
                  verbose = 0
@@ -1327,7 +1333,7 @@ local void compress_thread(void *dummy)
             temp = get_space(&out_pool);
             temp->len = 0;
         }
-
+#endif
         /* set dictionary if provided, release that input or dictionary buffer
            (not NULL if dict is true and if this is not the first work unit) */
         if (job->out != NULL) {
@@ -1345,12 +1351,16 @@ local void compress_thread(void *dummy)
 
         /* set up input and output */
         job->out = get_space(&out_pool);
+#ifndef WITHOUT_ZOPFLI
         if (g.level <= 9) {
+#endif
             strm.next_in = job->in->buf;
             strm.next_out = job->out->buf;
+#ifndef WITHOUT_ZOPFLI
         }
         else
             memcpy(temp->buf + temp->len, job->in->buf, job->in->len);
+#endif
 
         /* compress each block, either flushing or finishing */
         next = job->lens == NULL ? NULL : job->lens->buf;
@@ -1371,7 +1381,9 @@ local void compress_thread(void *dummy)
             }
             left -= len;
 
+#ifndef WITHOUT_ZOPFLI
             if (g.level <= 9) {
+#endif
                 /* run MAXP2-sized amounts of input through deflate -- this
                    loop is needed for those cases where the unsigned type is
                    smaller than the size_t type, or when len is close to the
@@ -1408,6 +1420,8 @@ local void compress_thread(void *dummy)
                 }
                 else
                     deflate_engine(&strm, job->out, Z_FINISH);
+
+#ifndef WITHOUT_ZOPFLI
             }
             else {
                 /* compress len bytes using zopfli, bring to byte boundary */
@@ -1444,6 +1458,7 @@ local void compress_thread(void *dummy)
                 }
                 temp->len += len;
             }
+#endif
         } while (left);
         if (g.level > 9)
             drop_space(temp);
@@ -3687,7 +3702,7 @@ local void cut_short(int sig)
 /* Process arguments, compress in the gzip format.  Note that procs must be at
    least two in order to provide a dictionary in one work unit for the other
    work unit, and that size must be at least 32K to store a full dictionary. */
-int main(int argc, char **argv)
+int pigz_main(int argc, char **argv)
 {
     int n;                          /* general index */
     int noop;                       /* true to suppress option decoding */

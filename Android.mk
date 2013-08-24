@@ -1,13 +1,44 @@
 LOCAL_PATH := $(call my-dir)
 
-include $(CLEAR_VARS)
+pigz_src_files := pigz.c yarn.c
+zopfli_src_files := zopfli/blocksplitter.c \
+					zopfli/cache.c \
+					zopfli/deflate.c \
+					zopfli/tree.c \
+					zopfli/lz77.c \
+					zopfli/hash.c \
+					zopfli/util.c \
+					zopfli/squeeze.c \
+					zopfli/katajainen.c
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := libzopfli
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := $(zopfli_src_files)
+LOCAL_C_INCLUDES := $(LOCAL_PATH) external/zlib external/pigz/zopfli
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libpigz
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := $(pigz_src_files)
+LOCAL_C_INCLUDES := $(LOCAL_PATH) external/zlib external/pigz/zopfli
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libminipigz
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := $(pigz_src_files)
+LOCAL_C_INCLUDES := $(LOCAL_PATH) external/zlib external/pigz/zopfli
+LOCAL_CFLAGS := -DWITHOUT_ZOPFLI
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE := pigz
 LOCAL_MODULE_TAGS := optional
-LOCAL_SRC_FILES := pigz.c yarn.c
-LOCAL_C_INCLUDES := $(LOCAL_PATH) external/zlib external/zlib/zopfli
+LOCAL_SRC_FILES := main.c
 LOCAL_SHARED_LIBRARIES := libz libc
-LOCAL_STATIC_LIBRARIES := libzopfli
+LOCAL_STATIC_LIBRARIES := libpigz libzopfli
 LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 include $(BUILD_EXECUTABLE)
 
@@ -26,5 +57,3 @@ ALL_DEFAULT_INSTALLED_MODULES += $(SYMLINKS)
 # local module name
 ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
     $(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
-
-include external/pigz/zopfli/Android.mk
