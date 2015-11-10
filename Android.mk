@@ -40,20 +40,8 @@ LOCAL_SRC_FILES := main.c
 LOCAL_SHARED_LIBRARIES := libz libc
 LOCAL_STATIC_LIBRARIES := libpigz libzopfli
 LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+
+PIGZ_TOOLS := unpigz gzip gunzip
+LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf pigz $(TARGET_OUT)/xbin/$(t);)
+
 include $(BUILD_EXECUTABLE)
-
-PIGZ_TOOLS := unpigz
-SYMLINKS := $(addprefix $(TARGET_OUT_OPTIONAL_EXECUTABLES)/,$(PIGZ_TOOLS))
-$(SYMLINKS): PIGZ_BINARY := $(LOCAL_MODULE)
-$(SYMLINKS): $(LOCAL_INSTALLED_MODULE)
-	@echo "Symlink: $@ -> $(PIGZ_BINARY)"
-	@mkdir -p $(dir $@)
-	@rm -rf $@
-	$(hide) ln -sf $(PIGZ_BINARY) $@
-
-ALL_DEFAULT_INSTALLED_MODULES += $(SYMLINKS)
-
-# We need this so that the installed files could be picked up based on the
-# local module name
-ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
-    $(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
