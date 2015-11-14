@@ -35,7 +35,7 @@ LOCAL_SHARED_LIBRARIES := libz
 LOCAL_C_INCLUDES := $(LOCAL_PATH) external/zlib external/pigz/zopfli/src/zopfli
 LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 
-PIGZ_TOOLS := unpigz gzip gunzip
-LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf pigz $(TARGET_OUT)/xbin/$(t);)
+PIGZ_TOOLS := unpigz gzip gunzip zcat
+LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(PIGZ_TOOLS),ln -sf pigz $(TARGET_OUT)/xbin/$(t);)
 
 include $(BUILD_EXECUTABLE)
